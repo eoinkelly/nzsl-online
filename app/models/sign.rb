@@ -67,12 +67,34 @@ class Sign
   def self.search(params)
     before_time = Time.now.to_f
     url = url_for_search(params)
-    xml_document = Nokogiri::XML(open(url))
+    response = fetch_from_freelex(url)
+    xml_document = Nokogiri::XML(response)
     entries = xml_document.css(ELEMENT_NAME)
     count = xml_document.css('totalhits').inner_text.to_i
     save_time_elapsed(url, before_time, count)
 
     [count, entries]
+  end
+
+  def self.fetch_from_freelex(url)
+    ##
+    # Available timeout options for open()` - the options are part of Net::HTTP
+    # which is what open() wraps.
+    #
+    # open_timeout
+    #     Number of seconds to wait for the connection to open. Any number may
+    #     be used, including Floats for fractional seconds. If the HTTP object
+    #     cannot open a connection in this many seconds, it raises a
+    #     Net::OpenTimeout exception. The default value is 60 seconds.
+    # read_timeout
+    #     Number of seconds to wait for one block to be read (via one read(2)
+    #     call). Any number may be used, including Floats for fractional
+    #     seconds. If the HTTP object cannot read data in this many seconds, it
+    #     raises a Net::ReadTimeout exception. The default value is 60 seconds.
+    #
+    open(url, open_timeout: 1, read_timeout: 1)
+  rescue Net::ReadTimeout, Net::OpenTimeout
+    # ???
   end
 
   def self.save_time_elapsed(url, before_time, count)
